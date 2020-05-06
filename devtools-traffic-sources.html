@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="./css/element/2.13.0/index.css">
+  <style>
+    .app {
+      padding: 20px;
+      min-width: 500px;
+    }
+
+    .timeToType {
+      margin: 20px 0;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .lable {
+      display: inline-block;
+      width: 90px;
+    }
+
+    .hint-area .flex {
+      display: flex;
+      align-items: center;
+    }
+
+    .hint-area .flex h3 {
+      flex: 0 0 auto;
+    }
+
+    .hint-area .flex .content {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="app">
+
+    <div class="select-area" v-loading="isdownload" element-loading-text="拼命加载中"
+      element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
+      <div>
+        <h2>流量来源数据爬取</h2>
+      </div>
+
+      <div class="fileToType">
+        <span class="lable">文件保存类型：</span>
+        <el-select v-model="fileToType" placeholder="请选择文件保存类型类型">
+          <el-option v-for="item in fileToTypeData" :key="item.value" :label="item.label" :value="item.value">
+          </el-option>
+        </el-select>
+      </div>
+
+      <div class="timeToType">
+        <span class="lable">时间类型：</span>
+        <el-select v-model="timeToType" placeholder="请选择时间类型">
+          <el-option v-for="item in timeToTypeData" :key="item.value" :label="item.label" :value="item.value">
+          </el-option>
+        </el-select>
+      </div>
+
+      <div>
+        <span class="lable">日期选择：</span>
+        <el-date-picker @change='handleDateValue' value-format="yyyy-MM-dd" v-model="rande"
+          :picker-options="pickerOptions" :type="timeToType" range-separator="至" start-placeholder="开始日期"
+          end-placeholder="结束日期">
+        </el-date-picker>
+        <el-button type="primary" @click='handleStartStealData' :disabled='disabled'>开始爬取</el-button>
+      </div>
+    </div>
+    <div class="hint-area">
+      <el-divider></el-divider>
+      <div class="flex">
+        <h3>预计需要时间：</h3>
+        <div>{{hintArea.predictData}}</div>
+      </div>
+      <div class="flex">
+        <h3>当前进度：</h3>
+        <el-progress class="content" :text-inside="true" :stroke-width="24" :percentage="hintArea.percentage"
+          status="success">
+        </el-progress>
+      </div>
+      <div class="flex">
+        <h3>正在进行：</h3>
+        <div class="content">{{hintArea.downloadFilename}}</div>
+      </div>
+    </div>
+
+
+  </div>
+  <script src='./js/save-csv.min.js'></script>
+  <script src="./js/vue.min.js"></script>
+  <script src="./js/element.js"></script>
+  <script src="./js/moment.min.js"></script>
+  <script src="./js/axios.js"></script>
+  <!-- <script src="./js/jquery.min.js"></script> -->
+  <script src="./devtools-traffic-sources.js"></script>
+</body>
+
+</html>

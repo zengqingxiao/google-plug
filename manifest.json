@@ -1,0 +1,58 @@
+{
+  "name": "唯品会魔方罗盘流量来源采集",
+  "description": "麦优数字信息部",
+  "version": "1.0",
+  "manifest_version": 2,
+  // 设置权限
+  "permissions": [
+    "storage",
+    "declarativeContent",
+    "notifications",
+    "tabs",
+    "activeTab",
+    "webRequest",
+    "webRequestBlocking",
+    "*://*/*"
+  ],
+  // 浏览器右上角图标设置，browser_action、page_action、app必须三选一
+  // "browser_action": {
+  // 	"default_popup": "/popup/popup.html",
+  // 	"default_icon": "./images/logo.png"
+  // },
+  // content_scripts
+  "content_scripts": [
+    {
+      //"matches": ["http://*/*", "https://*/*"],
+      // "<all_urls>" 表示匹配所有地址
+      "matches": [
+        "*://*.vip.com/*"
+      ],
+      // 多个JS按顺序注入
+      "js": [
+        "js/jquery.min.js",
+        "js/vue.min.js",
+        "js/moment.min.js",
+        "js/baidiui-vue.min.js",
+        "content.js"
+      ],
+      // JS的注入可以随便一点，但是CSS的注意就要千万小心了，因为一不小心就可能影响全局样式
+      // "css": ["css/custom.css"],
+      // 代码注入的时间，可选值： "document_start", "document_end", or "document_idle"，最后一个表示页面空闲时，默认document_idle
+      "run_at": "document_start"
+    }
+  ],
+  // 会一直常驻的后台JS或后台页面
+  "background": {
+    // 2种指定方式，如果指定JS，那么会自动生成一个背景页
+    // "page": "background.html"
+    "scripts": [
+      "js/jquery.min.js",
+      "js/moment.min.js",
+      "background.js"
+    ],
+    "persistent": true
+  },
+  // devtools_page
+  "devtools_page": "devtools.html",
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
