@@ -11,6 +11,22 @@ new Vue({
       disabled: true, // 爬取按钮是否可以点击
       rande: [],
       newData: [], // csv数据
+      conditionData: [
+        {
+          title: '日类型时间选择',
+          rande: [],
+          startDate: '',
+          endDate: '',
+          show: true
+        },
+        {
+          title: '月类型时间选择',
+          rande: [],
+          startDate: '',
+          endDate: '',
+          show: true
+        }
+      ], // 条件数据
       pickerOptions: {
         disabledDate: (time) => {
           if (this.timeToType === "daterange") {
