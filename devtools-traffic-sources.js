@@ -45,7 +45,6 @@ new Vue({
             // 设置上一个月
             return time.getTime() > moment(moment().add(-1, 'month').format("YYYY-MM")).valueOf();
           }
-
         }
       },
       // 时间类型数据
@@ -62,7 +61,7 @@ new Vue({
       timestamp: Date.parse(new Date()), // 当前时间戳
       // 请求参数配置
       defaultParams: {
-        callback: "jQuery350031175090202621925_1588149710640",
+        callback: `jQuery350031175090202621925_${Date.parse(new Date()) - 20}`,
         brandStoreName: "汤臣倍健",
         brandStoreSn: 10000980,
         dateMode: 7,
@@ -71,7 +70,7 @@ new Vue({
         beginDate: '2020-04-28',
         endDate: '2020-04-28',
         chartType: '',
-        _: this.timestamp
+        _: Date.parse(new Date())
       },
       // 提示区域数据
       hintArea: {
