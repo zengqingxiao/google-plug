@@ -257,12 +257,12 @@ new Vue({
         this.hintArea.percentage = this.handleAchievePercent(this.needRequestApiNum, this.requestApiNum) * 100 // 返回百分比
         if (this.fileToType === 2) {
           // 多文件
-          window.saveCsv(tempnewData, { filename: `${paramObj.beginDate}-${paramObj.endDate}.csv` });
+          window.saveCsv(tempnewData, { filename: `${item.label}_${paramObj.beginDate}-${paramObj.endDate}.csv` });
         }
       }
       if (this.fileToType === 1) {
         // 单文件
-        window.saveCsv(monofileDate, { filename: `${item.rande[0]}-${item.rande[1]}.csv` });
+        window.saveCsv(monofileDate, { filename: `${item.label}_${item.rande[0]}-${item.rande[1]}.csv` });
       }
     },
     /**
