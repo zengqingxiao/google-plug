@@ -37,6 +37,10 @@
     .hint-area .flex .content {
       flex: 1;
     }
+
+    .box-card {
+      margin: 20px 0;
+    }
   </style>
 </head>
 
@@ -56,35 +60,21 @@
           </el-option>
         </el-select>
       </div>
-
-      <div class="timeToType">
-        <span class="lable">时间类型：</span>
-        <el-select v-model="timeToType" placeholder="请选择时间类型">
-          <el-option v-for="item in timeToTypeData" :key="item.value" :label="item.label" :value="item.value">
-          </el-option>
-        </el-select>
-      </div>
-
-      <div>
-        <span class="lable"> 日期选择：</span>
-        <el-date-picker @change='handleDateValue' value-format="yyyy-MM-dd" v-model="rande"
-          :picker-options="pickerOptions" :type="timeToType" range-separator="至" start-placeholder="开始日期"
-          end-placeholder="结束日期">
-        </el-date-picker>
-        <el-button type="primary" @click='handleStartStealData' :disabled='disabled'>开始爬取</el-button>
-      </div>
-
       <el-card class="box-card" v-for='(item, index) in conditionData' :key='index'>
         <div slot="header" class="clearfix">
           <span>{{item.title}}</span>
-          <el-switch style="float: right; padding: 3px 0" v-model="item.show" active-color="#13ce66"
-            inactive-color="#ff4949">
+          <el-switch @change='handleSwitch($event, item)' style="float: right; padding: 3px 0" v-model="item.show"
+            active-color="#13ce66" inactive-color="#ff4949">
           </el-switch>
         </div>
-        <div v-for="o in 4" :key="o" class="text item">
-          {{'列表内容 ' + o }}
+        <div v-if='item.show'>
+          <el-date-picker value-format="yyyy-MM-dd" v-model="item.rande" :picker-options="item.pickerOptions"
+            :type="item.timeToType" range-separator="至" :start-placeholder="`开始${item.label}日期`"
+            :end-placeholder="`结束${item.label}日期`">
+          </el-date-picker>
         </div>
       </el-card>
+      <el-button type="primary" @click='handleClickbutton'>开始爬取</el-button>
     </div>
     <div class="hint-area">
       <el-divider></el-divider>

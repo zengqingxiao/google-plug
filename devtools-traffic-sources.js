@@ -4,29 +4,38 @@ new Vue({
   data: function () {
     return {
       isdownload: false, // 是否在拉取数据
-      timeToType: "daterange", // 时间组件类型
       fileToType: 1, // 文件保存类型
-      startDate: '', // 开始时间
-      endDate: '', // 选择的结束时间
-      disabled: true, // 爬取按钮是否可以点击
-      rande: [],
       newData: [], // csv数据
+      needRequestApiNum: '', //需要请求接口的次数
+      requestApiNum: 0,// 请求接口次数
       conditionData: [
         {
+          show: true,
           title: '日类型时间选择',
+          label: '天',
           rande: [],
-          startDate: '',
-          endDate: '',
-          show: true
+          timeToType: 'daterange',
+          pickerOptions: {
+            disabledDate: (time) => {
+              return time.getTime() > moment(moment().add(-1, 'days').format("YYYY-MM-DD")).valueOf();
+            }
+          }
         },
         {
+          show: true,
           title: '月类型时间选择',
+          label: '月',
           rande: [],
-          startDate: '',
-          endDate: '',
-          show: true
+          timeToType: 'monthrange',
+          pickerOptions: {
+            disabledDate: (time) => {
+              // 设置上一个月
+              return time.getTime() > moment(moment().add(-1, 'month').format("YYYY-MM")).valueOf();
+            }
+          },
         }
-      ], // 条件数据
+      ],
+      // 条件数据
       pickerOptions: {
         disabledDate: (time) => {
           if (this.timeToType === "daterange") {
@@ -39,17 +48,6 @@ new Vue({
 
         }
       },
-      // 日期类型数据
-      timeToTypeData: [
-        {
-          value: "daterange",
-          label: '日'
-        },
-        {
-          value: "monthrange",
-          label: '月'
-        }
-      ],
       // 时间类型数据
       fileToTypeData: [
         {
@@ -150,33 +148,17 @@ new Vue({
       })
     },
     /**
-     * 时间组件值发生改变
-     * 1.赋值开始和结束值
-     * 2.爬取按钮是否可以点击
-     * @param {Array} [val = []] 
-     */
-    handleDateValue (val = []) {
-      if (this.getType(val) === 'Array' && val[0] && val[1]) {
-        this.startDate = val[0]
-        this.endDate = val[1]
-        this.disabled = false
-      } else {
-        this.disabled = true
-      }
-    },
-    /**
      * 时间差
-     * @param {Data || String} [end] 结束时间
-     * @param {Data || String} [start] 开始时间
+     * @param {Data || String} [item] 每一个不同类型的全部参数
      * @retuen {Number} 返回对比时间的差
      */
-    handleTimeDifference (end, start) {
-      let diff
-      if (this.timeToType === 'daterange') {
-        diff = moment(end).diff(start, 'days')
+    handleTimeDifference (item) {
+      let diff = 0
+      if (item.timeToType === 'daterange' && item.rande && item.rande.length > 0) {
+        diff = moment(item.rande[1]).diff(item.rande[0], 'days') + 1
       }
-      if (this.timeToType === 'monthrange') {
-        diff = moment(end).diff(start, 'month')
+      if (item.timeToType === 'monthrange' && item.rande && item.rande.length > 0) {
+        diff = moment(item.rande[1]).diff(item.rande[0], 'month') + 1
       }
       return diff
     },
@@ -187,30 +169,75 @@ new Vue({
 
     },
     /**
-     * 开始爬取数据
-     * @param {Object} [param = {}] 需要修改的参数
+     * 点击爬取数据
      */
-    async handleStartStealData () {
-      if (!this.endDate && !this.startDate) return
+    handleClickbutton () {
+      let normal = this.conditionData.some(item => {
+        return item.rande && item.rande.length > 1
+      })
+      if (!normal) {
+        this.$message.error('至少要有一个类型的时间范围');
+        return
+      }
+      this.handleHintAreaEmpty() // 提示区域清空
+      this.isdownload = true // 开始下载数据
+      this.needRequestApiNum = this.handleGetAllfileNumber(this.conditionData)  //需要请求接口的全部次数
+      this.hintArea.predictData = this.handlePredictDate(this.needRequestApiNum) //预计时间
+      Promise.all(
+        this.conditionData.map((item) => {
+          return this.handleStartStealData(item)
+        })).then(() => {
+          this.requestApiNum = 0 // 请求次数归0
+          this.handleDesktopNotification() // 桌面通知
+          this.isdownload = false // 结束爬取数据
+        })
+    },
+    /**
+     * 提示区域清空
+     */
+    handleHintAreaEmpty () {
+      this.hintArea.percentage = 0
+      this.hintArea.predictData = '暂时无法判断'
+      this.hintArea.downloadFilename = '---'
+    },
+    /**
+     * 获取全部的需要爬取接口的次数
+     * 1.天类型：一天+1
+     * 2.月类型：一个月+1
+     * @param {Array} [DataArr] conditionData数组
+     * @retuen {String} 返回爬取接口的次数
+     */
+    handleGetAllfileNumber (DataArr = []) {
+      let num = 0
+      DataArr.forEach(item => {
+        num += this.handleTimeDifference(item)
+      })
+      return num
+    },
+    /**
+     * 开始爬取数据
+     * @param {Object} [param = {}] 每一个不同类型的参数
+     */
+    async handleStartStealData (item) {
+      // if (!item.rande[0] && !item.rande[1]) return
+      if (!(item.rande && item.rande.length > 0)) return
       let monofileDate = [] // 单文件数据
-      this.isdownload = true // 是否开始下载数据
-      let diff = this.handleTimeDifference(this.endDate, this.startDate) // 一共选择多少天
-      this.hintArea.predictData = this.handlePredictDate(diff + 1) //预计时间
-      for (let i = 0; i < diff + 1; i++) {
+      let diff = this.handleTimeDifference(item) // 一共选择多少天
+      for (let i = 0; i < diff; i++) {
         let paramObj = {}
-        if (this.timeToType === 'daterange') {
+        if (item.timeToType === 'daterange') {
           paramObj = {
-            beginDate: moment(this.startDate).add(i, 'days').format('YYYY-MM-DD'),
-            endDate: moment(this.startDate).add(i, 'days').format('YYYY-MM-DD'),
+            beginDate: moment(item.rande[0]).add(i, 'days').format('YYYY-MM-DD'),
+            endDate: moment(item.rande[0]).add(i, 'days').format('YYYY-MM-DD'),
             dateMode: 7,
             dateType: 'P',
             detailType: 'D',
           }
         }
-        if (this.timeToType === 'monthrange') {
+        if (item.timeToType === 'monthrange') {
           paramObj = {
-            beginDate: moment(this.startDate).add(i, 'month').startOf('month').format('YYYY-MM-DD'),
-            endDate: moment(this.startDate).add(i, 'month').endOf('month').format('YYYY-MM-DD'),
+            beginDate: moment(item.rande[0]).add(i, 'month').startOf('month').format('YYYY-MM-DD'),
+            endDate: moment(item.rande[0]).add(i, 'month').endOf('month').format('YYYY-MM-DD'),
             dateMode: 2,
             dateType: 'D',
             detailType: 'M'
@@ -221,21 +248,22 @@ new Vue({
         this.newData = []
         this.recursion({ data: rem.singleResult.insideData, subsetKey: 'children', valKey: 'entry', callback: this.callback })
         this.recursion({ data: rem.singleResult.outsideData, subsetKey: 'children', valKey: 'entry', callback: this.callback })
-        let tempnewData = this.newData.map(item => {
-          return this.handleFieldFilter(Object.assign(item, { beginDate: paramObj.beginDate, endDate: paramObj.endDate }))
+
+        let tempnewData = this.newData.map(subitem => {
+          return this.handleFieldFilter(Object.assign(subitem, { beginDate: paramObj.beginDate, endDate: paramObj.endDate }))
         })
         monofileDate = [...monofileDate, ...tempnewData] // 数据拼接
-        this.hintArea.percentage = this.handleAchievePercent(diff, i) * 100 // 返回百分比
+        this.requestApiNum++
+        this.hintArea.percentage = this.handleAchievePercent(this.needRequestApiNum, this.requestApiNum) * 100 // 返回百分比
         if (this.fileToType === 2) {
+          // 多文件
           window.saveCsv(tempnewData, { filename: `${paramObj.beginDate}-${paramObj.endDate}.csv` });
         }
       }
       if (this.fileToType === 1) {
-        window.saveCsv(monofileDate, { filename: `${this.startDate}-${this.endDate}.csv` });
+        // 单文件
+        window.saveCsv(monofileDate, { filename: `${item.rande[0]}-${item.rande[1]}.csv` });
       }
-      this.isdownload = false
-      // 桌面通知
-      this.handleDesktopNotification()
     },
     /**
      * 桌面通知
@@ -244,7 +272,7 @@ new Vue({
     handleDesktopNotification (name = null) {
       chrome.notifications.create(name, {
         type: 'basic',
-        iconUrl: './images/get_started32.png',
+        iconUrl: './images/wei.png',
         title: '唯品会插件通知',
         message: '您刚才爬取的唯品会流量数据已经完成！'
       });
@@ -270,8 +298,27 @@ new Vue({
      * @param {String} [num] 全部的数据条数
      * @param {String} [Data] 一条数据是需要的时间
      */
-    handlePredictDate (num, Data = 0.5) {
+    handlePredictDate (num, Data = 2) {
       return num * Data + '秒'
+    },
+    /**
+     * Switch按钮状态改变的时候
+     * @param {Boolean} [e] 当前Switch选择的值
+     * @param {Object} [item] 当前switch所在的数据对象
+     */
+    handleSwitch (e, item) {
+      if (!e) {
+        item.rande = []
+        this.$message({
+          message: `移除${item.label}查询数据`,
+          type: 'warning'
+        });
+      } else {
+        this.$message({
+          message: `添加${item.label}查询数据`,
+          type: 'success'
+        });
+      }
     },
     // 模拟请求接口
     handleStealData (params) {
